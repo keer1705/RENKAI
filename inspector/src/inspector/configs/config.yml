@@ -1,0 +1,59 @@
+functions:
+  inspector:
+    _type: inspector
+    output_file_path: "S:/Renkai/constructor_agent/output.py"
+
+llms:
+  nim_llm:
+    _type: nim
+    temperature: 0.3
+    max_tokens: 100000
+
+workflow:
+  _type: react_agent
+  llm_name: nim_llm
+  tool_names: [inspector]
+  max_iterations: 3
+  verbose: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

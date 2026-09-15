@@ -1,0 +1,22 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 64", "setuptools-scm>=8"]
+
+[tool.setuptools_scm]
+root = "../.."
+
+[project]
+name = "planner"
+dynamic = ["version"]
+dependencies = [
+  "nvidia-nat[langchain]",
+]
+requires-python = ">=3.11,<3.13"
+description = "Custom NeMo Agent Toolkit Workflow"
+classifiers = ["Programming Language :: Python"]
+
+[tool.uv.sources]
+nvidia-nat = { path = "S:/Renkai", editable = true }  
+
+[project.entry-points.'nat.components']
+planner = "planner.register"

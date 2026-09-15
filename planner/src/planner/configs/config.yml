@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+functions:
+  planner_agent:
+    _type: planner_agent
+    llm_name: nim_llm
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    base_url: https://integrate.api.nvidia.com/v1
+    temperature: 0.3
+    max_tokens: 100000
+
+workflow:
+  _type: reasoning_agent
+  llm_name: nim_llm
+  augmented_fn: planner_agent
+  verbose: true
+  max_depth: 2
+  max_iterations: 3
+

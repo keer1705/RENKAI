@@ -1,0 +1,78 @@
+{
+  "project": "Gemini Coding Agent",
+  "objective": "An agent that generates and explains Python code using the Gemini API in real time.",
+  "algorithm": [
+    {
+      "step": 1,
+      "action": "Setup and Installation",
+      "pseudocode": [
+        "RUN 'pip install google-generativeai'",
+        "IMPORT google.generativeai AS genai"
+      ]
+    },
+    {
+      "step": 2,
+      "action": "Initialize API Client",
+      "pseudocode": [
+        "SET api_key = 'YOUR_GEMINI_API_KEY'",
+        "CALL genai.configure(api_key=api_key)",
+        "PRINT 'Gemini API configured successfully.'"
+      ]
+    },
+    {
+      "step": 3,
+      "action": "Define Agent Behavior",
+      "pseudocode": [
+        "system_prompt = '''",
+        "You are a helpful coding agent named CodeMind.",
+        "You write clean, optimized Python code for user tasks,",
+        "and explain your logic clearly when asked.",
+        "'''"
+      ]
+    },
+    {
+      "step": 4,
+      "action": "Accept User Task",
+      "pseudocode": [
+        "user_prompt = 'Write Python code for a REST API using FastAPI with two routes: /add and /subtract.'",
+        "PRINT 'User request received.'"
+      ]
+    },
+    {
+      "step": 5,
+      "action": "Create Gemini Model Instance",
+      "pseudocode": [
+        "model = genai.GenerativeModel('gemini-1.5-flash')",
+        "PRINT 'Model loaded successfully.'"
+      ]
+    },
+    {
+      "step": 6,
+      "action": "Send Request and Generate Response",
+      "pseudocode": [
+        "response = model.generate_content(system_prompt + '\\n' + user_prompt)",
+        "STORE result IN output"
+      ]
+    },
+    {
+      "step": 7,
+      "action": "Display Generated Code",
+      "pseudocode": [
+        "PRINT 'Generated Code:'",
+        "PRINT output.text"
+      ]
+    },
+    {
+      "step": 8,
+      "action": "Optional: Enable Real-Time Interaction",
+      "pseudocode": [
+        "WHILE True:",
+        "    READ user_prompt",
+        "    IF user_prompt == 'exit':",
+        "        BREAK",
+        "    response = model.generate_content(system_prompt + '\\n' + user_prompt)",
+        "    PRINT response.text"
+      ]
+    }
+  ]
+}

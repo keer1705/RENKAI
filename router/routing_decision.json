@@ -1,0 +1,5 @@
+{
+  "lane": "build_pipeline",
+  "reason": "User explicitly asks to generate a front end design, which implies code creation.",
+  "original_input": "generate me a front end degisn for a website for  Notes App"
+}

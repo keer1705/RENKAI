@@ -1,0 +1,23 @@
+functions:
+  constructor_agent:
+    _type: constructor_agent
+    llm_name: nim_llm
+    verbose: true
+    description: "Builds code step-by-step from JSON plans containing project objectives and algorithm steps"
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    base_url: https://integrate.api.nvidia.com/v1
+    temperature: 0.0
+    max_tokens: 100000
+
+workflow:
+  _type: reasoning_agent
+  llm_name: nim_llm
+  augmented_fn: constructor_agent
+  verbose: true
+  max_depth: 2
+  max_iterations: 4
+

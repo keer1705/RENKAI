@@ -1,0 +1,54 @@
+functions:
+  router:
+    _type: router
+    llm_name: nim_llm
+
+  deerflow_agent:
+    _type: deerflow_agent
+    llm_name: nim_llm
+
+  planner:
+    _type: planner_agent
+    llm_name: nim_llm
+
+  constructor:
+    _type: constructor_agent
+    llm_name: nim_llm
+    verbose: true
+
+  inspector:
+    _type: inspector
+    output_file_path: "S:/Renkai/constructor_agent/output.py"
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    base_url: https://integrate.api.nvidia.com/v1
+    temperature: 0.0
+    max_tokens: 4096
+    timeout: 360
+
+workflow:
+  _type: react_agent
+  llm_name: nim_llm
+  tool_names: [router, deerflow_agent, planner, constructor]
+  verbose: true
+  max_iterations: 8
+  additional_instructions: >
+    You are a routing orchestrator. Follow this strictly:
+
+    STEP 1 — Always call router first with the user query.
+    Check the "lane" field in the response.
+
+    STEP 2A — If lane is "deerflow_direct":
+      Call deerflow_agent with the user query.
+      Return the answer to the user. STOP.
+
+    STEP 2B — If lane is "build_pipeline":
+      Call deerflow_agent with the user query.
+      Then call planner with the user query.
+      Then call constructor with input "build".
+      STOP after constructor finishes.
+
+    Never skip router. Never call deerflow_agent twice.

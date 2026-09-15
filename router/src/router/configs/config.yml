@@ -1,0 +1,18 @@
+functions:
+  current_datetime:
+    _type: current_datetime
+  router:
+    _type: router
+    prefix: "Hello:"
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    base_url: https://integrate.api.nvidia.com/v1
+    temperature: 0.0
+
+workflow:
+  _type: react_agent
+  llm_name: nim_llm
+  tool_names: [current_datetime, router]

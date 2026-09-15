@@ -1,0 +1,89 @@
+{
+  "project": "NotesAppUI",
+  "output_type": "html",
+  "algorithm_steps": [
+    {
+      "step_number": 1,
+      "step_title": "Create HTML skeleton",
+      "step_description": "Build the base HTML structure that will host the notes application, including a header, a note entry form, a container for the notes list, and a footer.",
+      "instructions": [
+        "Add a <!DOCTYPE html> declaration and open <html> with lang=\"en\".",
+        "Inside <head>, include <meta charset=\"UTF-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">, and a <title>Notes App</title>.",
+        "Create a <body> containing: a <header> with an <h1> title, a <section id=\"note-form\"> with a <textarea id=\"note-input\" placeholder=\"Write a note...\" required> and a <button id=\"add-btn\">Add</button>, a <main id=\"notes-container\"></main> for rendering notes, and a <footer> with a small copyright line."
+      ],
+      "inputs": [],
+      "outputs": [],
+      "dependencies": {
+        "requires_previous_steps": [],
+        "provides_for_next_steps": [
+          2
+        ]
+      }
+    },
+    {
+      "step_number": 2,
+      "step_title": "Add dark modern CSS",
+      "step_description": "Style the page with a dark color palette, smooth transitions, and responsive layout using only inline CSS.",
+      "instructions": [
+        "Insert a <style> block directly after the <title> tag.",
+        "Define root variables for colors: --bg:#121212, --card:#1e1e1e, --accent:#bb86fc, --text:#e0e0e0.",
+        "Apply a flex column layout to body, set background to var(--bg), and use font-family: system-ui, sans-serif.",
+        "Style header, footer, #note-form, textarea, button, and .note-card with rounded corners, box\u2011shadows, and hover effects using the defined variables.",
+        "Make #notes-container a CSS grid that adapts to screen width (minmax(250px, 1fr))."
+      ],
+      "inputs": [],
+      "outputs": [],
+      "dependencies": {
+        "requires_previous_steps": [
+          1
+        ],
+        "provides_for_next_steps": [
+          3
+        ]
+      }
+    },
+    {
+      "step_number": 3,
+      "step_title": "Implement note logic in JavaScript",
+      "step_description": "Create all functions needed to add, edit, delete, persist, and render notes using localStorage.",
+      "instructions": [
+        "Add a <script> block at the end of <body>.",
+        "Initialize a const notes = JSON.parse(localStorage.getItem('notes')||'[]');",
+        "Write function saveNotes() that stringifies notes and stores them under the key 'notes'.",
+        "Write function renderNotes() that clears #notes-container and iterates over notes, creating a div.note-card for each with the note text, an edit button, and a delete button; attach data-index attributes.",
+        "Write function addNote(text) that pushes {text, id:Date.now()} into notes, calls saveNotes() and renderNotes().",
+        "Write function editNote(index, newText) that updates notes[index].text, then calls saveNotes() and renderNotes().",
+        "Write function deleteNote(index) that splices notes at index, then calls saveNotes() and renderNotes()."
+      ],
+      "inputs": [],
+      "outputs": [],
+      "dependencies": {
+        "requires_previous_steps": [
+          2
+        ],
+        "provides_for_next_steps": [
+          4
+        ]
+      }
+    },
+    {
+      "step_number": 4,
+      "step_title": "Wire UI events and initialize",
+      "step_description": "Connect the form and note cards to the JavaScript functions, and render existing notes on page load.",
+      "instructions": [
+        "Add an event listener to #add-btn that reads #note-input.value, trims it, calls addNote(value) if not empty, and then clears the textarea.",
+        "Delegate click events on #notes-container: if the target matches .edit-btn, prompt the user for new text, then call editNote(index, newText); if the target matches .delete-btn, confirm deletion and call deleteNote(index).",
+        "After defining all functions, call renderNotes() once so stored notes appear immediately.",
+        "Prevent form submission default behavior by using e.preventDefault() on the button click handler."
+      ],
+      "inputs": [],
+      "outputs": [],
+      "dependencies": {
+        "requires_previous_steps": [
+          3
+        ],
+        "provides_for_next_steps": []
+      }
+    }
+  ]
+}

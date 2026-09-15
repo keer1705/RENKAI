@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+functions:
+  planner_agent:
+    _type: planner_agent
+    llm_name: nim_llm
+    web_tool: tavily_internet_search
+  
+  tavily_internet_search:
+    _type: nat.plugins.langchain.tools/tavily_internet_search
+    description: "Web search tool for researching best practices and technologies"
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    temperature: 0.3
+    max_tokens: 50000
+
+workflow:
+  agent:
+    _type: reasoning_agent
+    llm_name: nim_llm
+    agent_description: "Planner agent that generates algorithmic instructions"
+    system_prompt: |
+      You are an AI planning assistant. When a user asks you to plan how to build an agent,
+      use the planner tool to generate detailed pseudocode-algorithmic instructions.
+      Always return the JSON output from the planner tool.
+    max_depth: 2
+    max_iterations: 2

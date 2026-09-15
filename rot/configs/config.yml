@@ -1,0 +1,33 @@
+functions:
+  planner:
+    _type: planner_agent
+    llm_name: nim_llm
+
+  constructor:
+    _type: constructor_agent
+    llm_name: nim_llm
+
+  inspector:
+    _type: inspector
+    output_file_path: "S:/Renkai/constructor_agent/output.py"
+
+llms:
+  nim_llm:
+    _type: nim
+    model_name: openai/gpt-oss-120b
+    base_url: https://integrate.api.nvidia.com/v1
+    temperature: 0.3
+    max_tokens: 100000
+    timeout: 120
+
+workflow:
+  _type: react_agent
+  llm_name: nim_llm
+  tool_names: [planner, constructor]
+  verbose: true
+  max_iterations: 10
+  additional_instructions: >
+    Use each tool once in this exact order:
+    1. Call planner with the user query
+    2. Call constructor with no input - it reads the plan automatically
+    The constructor will validate and fix the code internally.

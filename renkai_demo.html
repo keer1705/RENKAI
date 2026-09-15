@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RENKAI — Autonomous AI Software Factory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080910;--bg2:#0e0f14;--bg3:#13141c;
+  --border:#1e2030;--border2:#2a2d3e;
+  --text:#e8eaf2;--muted:#5a5f7a;--muted2:#3a3e52;
+  --blue:#4d9fff;--blue-dim:rgba(77,159,255,0.12);
+  --red:#ff4d6a;--red-dim:rgba(255,77,106,0.1);
+  --green:#3dd68c;--green-dim:rgba(61,214,140,0.08);
+  --amber:#ffb347;--cyan:#00e5cc;
+  --f-display:'Syne',sans-serif;--f-mono:'IBM Plex Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--f-display)}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;opacity:0.5}
+.orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(77,159,255,0.1),transparent 70%);top:-160px;left:-140px}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(255,77,106,0.08),transparent 70%);bottom:-100px;right:-100px}
+.app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:rgba(8,9,16,0.85);backdrop-filter:blur(24px);flex-shrink:0}
+.logo{font-size:19px;font-weight:800;letter-spacing:0.09em}
+.logo span{color:var(--blue)}
+.header-center{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10px;color:var(--muted)}
+.hc-sep{color:var(--border2)}
+.status-chip{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);flex-shrink:0}
+.dot.live{background:var(--cyan);box-shadow:0 0 8px rgba(0,229,204,0.7);animation:blink 2s infinite}
+.dot.done{background:var(--green);box-shadow:0 0 8px rgba(61,214,140,0.5)}
+.dot.err{background:var(--red);box-shadow:0 0 8px rgba(255,77,106,0.5)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* Layout */
+.main{flex:1;display:grid;grid-template-columns:1fr 380px;min-height:0}
+
+/* Left panel */
+.output-side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border)}
+.output-label{display:flex;align-items:center;justify-content:space-between;padding:12px 32px;border-bottom:1px solid var(--border);background:rgba(8,9,16,0.5);flex-shrink:0}
+.output-label-left{display:flex;align-items:center;gap:10px}
+.label-tag{font-family:var(--f-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.output-label-right{font-family:var(--f-mono);font-size:10px;color:var(--muted2)}
+.output-scroll{flex:1;overflow-y:auto;padding:40px 48px;display:flex;flex-direction:column;gap:0}
+
+/* Idle */
+.idle-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.idle-glyph{width:72px;height:72px;border:1px solid var(--border2);border-radius:18px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg3),var(--bg2));position:relative;overflow:hidden}
+.idle-glyph::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(77,159,255,0.08),transparent 60%)}
+.idle-glyph svg{width:30px;height:30px;opacity:0.4;position:relative;z-index:1}
+.idle-title{font-size:24px;font-weight:800;letter-spacing:0.04em}
+.idle-sub{font-size:13px;color:var(--muted);max-width:380px;line-height:1.7}
+
+/* User echo */
+.user-echo{display:flex;align-items:flex-start;gap:12px;margin-bottom:36px;margin-top:8px}
+.user-avatar{width:32px;height:32px;border-radius:8px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--blue);margin-top:2px}
+.user-bubble{background:var(--bg2);border:1px solid var(--border2);border-radius:4px 16px 16px 16px;padding:14px 18px;font-size:14px;line-height:1.65;max-width:78%;color:var(--text)}
+
+/* Processing */
+.processing-block{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:28px 0}
+.proc-row{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.proc-spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-dots span{animation:dotPulse 1.4s infinite both}
+.proc-dots span:nth-child(2){animation-delay:.2s}
+.proc-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotPulse{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+
+/* Final output */
+.final-output-block{display:flex;flex-direction:column;gap:0;animation:fadeUp 0.4s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.output-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:14px 14px 0 0;border-bottom:1px solid var(--border2)}
+.output-header-left{display:flex;align-items:center;gap:10px}
+.output-type-badge{font-family:var(--f-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px}
+.badge-success{background:rgba(61,214,140,0.12);color:var(--green);border:1px solid rgba(61,214,140,0.25)}
+.badge-fixed{background:rgba(255,179,71,0.1);color:var(--amber);border:1px solid rgba(255,179,71,0.25)}
+.badge-failed{background:rgba(255,77,106,0.1);color:var(--red);border:1px solid rgba(255,77,106,0.25)}
+.output-title{font-size:13px;font-weight:600;color:var(--text)}
+.output-header-right{display:flex;align-items:center;gap:8px}
+.copy-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);font-size:10px;font-family:var(--f-mono);padding:5px 12px;border-radius:7px;cursor:pointer;transition:all 0.2s}
+.copy-btn:hover{color:var(--text);border-color:var(--muted)}
+
+/* Terminal */
+.terminal-output{background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;padding:28px 28px 24px;font-family:var(--f-mono);font-size:13px;line-height:1.8;color:#c5c8d8;white-space:pre-wrap;word-break:break-word;min-height:120px;position:relative;overflow:hidden}
+.terminal-output::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,0.012) 28px,rgba(255,255,255,0.012) 29px);pointer-events:none}
+.terminal-output .t-line{display:block;position:relative;z-index:1}
+.terminal-output .t-out{color:#c5c8d8}
+.terminal-output .t-err{color:var(--red)}
+.terminal-output .t-warn{color:var(--amber)}
+.terminal-output .t-info{color:var(--cyan)}
+.terminal-output .t-success{color:var(--green)}
+.output-meta-row{display:flex;align-items:center;gap:20px;padding:12px 20px 0;font-family:var(--f-mono);font-size:11px;color:var(--muted2)}
+.meta-item{display:flex;align-items:center;gap:6px}
+.meta-dot{width:5px;height:5px;border-radius:50%}
+
+/* Markdown rendered output */
+.md-output{background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;padding:28px 32px 28px;color:var(--text);font-size:14px;line-height:1.8;min-height:120px;overflow-x:auto}
+.md-output h1{font-size:22px;font-weight:800;color:var(--text);margin:0 0 16px;letter-spacing:0.03em}
+.md-output h2{font-size:17px;font-weight:700;color:var(--text);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.md-output h3{font-size:14px;font-weight:700;color:var(--blue);margin:18px 0 8px}
+.md-output h4{font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.06em}
+.md-output p{margin:0 0 12px;color:#c5c8d8}
+.md-output strong{color:var(--text);font-weight:700}
+.md-output em{color:var(--amber);font-style:italic}
+.md-output code{background:var(--bg3);border:1px solid var(--border2);color:var(--cyan);padding:1px 7px;border-radius:5px;font-family:var(--f-mono);font-size:12px}
+.md-output pre{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:16px 20px;margin:12px 0;overflow-x:auto}
+.md-output pre code{background:none;border:none;padding:0;font-size:12px;color:#c5c8d8}
+.md-output ul,.md-output ol{padding-left:22px;margin:8px 0 12px}
+.md-output li{margin:4px 0;color:#c5c8d8}
+.md-output li strong{color:var(--text)}
+.md-output blockquote{border-left:3px solid var(--blue);padding:8px 16px;margin:12px 0;background:var(--blue-dim);border-radius:0 8px 8px 0;color:var(--muted)}
+.md-output hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+.md-output a{color:var(--blue);text-decoration:none}
+.md-output a:hover{text-decoration:underline}
+/* Tables */
+.md-output table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.md-output th{background:var(--bg3);color:var(--text);font-weight:600;padding:8px 14px;text-align:left;border:1px solid var(--border2);font-family:var(--f-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase}
+.md-output td{padding:8px 14px;border:1px solid var(--border);color:#c5c8d8;vertical-align:top}
+.md-output tr:nth-child(even) td{background:rgba(255,255,255,0.02)}
+/* Checkmarks and special chars */
+.md-output .md-check{color:var(--green)}
+.md-output .md-cross{color:var(--red)}
+.md-output .md-week{color:var(--cyan);font-weight:600}
+/* Section dividers (━━━) */
+.md-output .md-divider{color:var(--border2);letter-spacing:2px;display:block;margin:8px 0}
+
+/* Input */
+.input-area{padding:16px 32px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.input-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;transition:border-color 0.3s,box-shadow 0.3s}
+.input-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 100%,rgba(77,159,255,0.12),transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(0,229,204,0.07),transparent 55%);opacity:0;transition:opacity 0.35s;pointer-events:none}
+.input-box:focus-within::before{opacity:1}
+.input-box:focus-within{border-color:rgba(77,159,255,0.3)}
+textarea#prompt{background:none;border:none;outline:none;resize:none;color:var(--text);font-family:var(--f-display);font-size:14px;line-height:1.6;width:100%;min-height:48px;max-height:120px;overflow-y:auto}
+textarea#prompt::placeholder{color:var(--muted)}
+.input-footer{display:flex;align-items:center;justify-content:space-between}
+.input-hint{font-size:11px;color:var(--muted2);font-family:var(--f-mono)}
+.run-btn{display:flex;align-items:center;gap:8px;background:var(--blue);border:none;color:#fff;font-family:var(--f-display);font-size:12px;font-weight:600;padding:9px 18px;border-radius:20px;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em}
+.run-btn:hover{background:#6cb0ff;transform:translateY(-1px)}
+.run-btn:active{transform:translateY(0) scale(0.97)}
+.run-btn.running{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);cursor:not-allowed}
+.run-btn svg{width:14px;height:14px}
+.run-spinner{width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+
+/* Right panel */
+.pipeline-side{background:var(--bg2);display:flex;flex-direction:column;padding:0;overflow-y:auto}
+.pipeline-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pipeline-label{font-family:var(--f-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pipeline-status-text{font-size:13px;font-weight:600;color:var(--muted)}
+.pipeline-body{padding:16px 16px 8px;display:flex;flex-direction:column;gap:0}
+
+/* Agent rows */
+.ag-row{display:flex;flex-direction:column;margin-bottom:2px}
+.ag-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid transparent;transition:all 0.35s}
+.ag-item.active{background:rgba(77,159,255,0.06);border-color:rgba(77,159,255,0.2)}
+.ag-item.done{background:rgba(61,214,140,0.04);border-color:rgba(61,214,140,0.15)}
+.ag-item.failed{background:rgba(255,77,106,0.05);border-color:rgba(255,77,106,0.18)}
+.ag-item.skipped{opacity:0.4}
+.ag-icon{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 0.3s}
+.ag-item.active .ag-icon{border-color:rgba(77,159,255,0.35);background:rgba(77,159,255,0.08)}
+.ag-item.done .ag-icon{border-color:rgba(61,214,140,0.3);background:rgba(61,214,140,0.07)}
+.ag-item.failed .ag-icon{border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.07)}
+.ag-info{flex:1;min-width:0}
+.ag-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ag-sub{font-size:10px;font-family:var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.3s}
+.ag-item.active .ag-sub{color:var(--blue)}
+.ag-item.done .ag-sub{color:var(--green)}
+.ag-item.failed .ag-sub{color:var(--red)}
+.ag-state{font-family:var(--f-mono);font-size:9px;letter-spacing:0.06em;padding:2px 7px;border-radius:12px;flex-shrink:0;background:var(--bg3);color:var(--muted);border:1px solid var(--border);transition:all 0.3s}
+.ag-item.active .ag-state{background:rgba(77,159,255,0.14);color:var(--blue);border-color:rgba(77,159,255,0.28)}
+.ag-item.done .ag-state{background:rgba(61,214,140,0.1);color:var(--green);border-color:rgba(61,214,140,0.22)}
+.ag-item.failed .ag-state{background:rgba(255,77,106,0.1);color:var(--red);border-color:rgba(255,77,106,0.22)}
+.ag-bar{height:2px;background:var(--border);border-radius:0 0 10px 10px;display:none;overflow:hidden;margin-top:-1px}
+.ag-item.active~.ag-bar{display:block}
+.ag-fill{height:100%;width:30%;background:linear-gradient(90deg,transparent,var(--blue));animation:barAnim 1.8s ease-in-out infinite}
+@keyframes barAnim{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
+.conn{width:1px;height:18px;margin-left:30px;background:var(--border2);transition:background 0.4s}
+.conn.lit{background:linear-gradient(to bottom,var(--green),var(--border2))}
+
+/* Pipeline summary */
+.pipeline-summary{margin:12px 16px 16px;padding:16px;background:rgba(61,214,140,0.04);border:1px solid rgba(61,214,140,0.15);border-radius:10px;display:none}
+.pipeline-summary.show{display:block}
+.ps-title{font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--green);margin-bottom:12px}
+.ps-row{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;margin-bottom:7px}
+.ps-row span:first-child{color:var(--muted)}
+.ps-row span:last-child{color:var(--text)}
+.ps-divider{height:1px;background:var(--border);margin:10px 0}
+
+footer{padding:7px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;color:var(--muted2);background:rgba(8,9,16,0.9);flex-shrink:0}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="app">
+
+  <header>
+    <div class="logo">REN<span>KAI</span></div>
+    <div class="header-center">
+      <span>NeMo Agent Toolkit</span><span class="hc-sep">·</span>
+      <span>DeerFlow 2.0</span><span class="hc-sep">·</span>
+      <span>Llama-3.3-70B</span>
+    </div>
+    <div class="status-chip">
+      <div class="dot" id="hDot"></div>
+      <span id="hStatus">Idle — waiting for input</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="output-side">
+      <div class="output-label">
+        <div class="output-label-left">
+          <div class="label-tag">Final Output</div>
+          <div id="outputFileBadge" style="font-family:var(--f-mono);font-size:10px;color:var(--muted2);display:none">output.py → stdout</div>
+        </div>
+        <div class="output-label-right" id="outputTimestamp"></div>
+      </div>
+
+      <div class="output-scroll" id="outputScroll">
+        <div class="idle-screen" id="idleScreen">
+          <div class="idle-glyph">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"/>
+              <polyline points="16 3 21 3 21 8"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </div>
+          <div class="idle-title">RENKAI</div>
+          <div class="idle-sub">Describe what you want built. The agent pipeline will research, plan, write code, and show you the <strong style="color:var(--text)">live execution result</strong> — not the code.</div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-box">
+          <textarea id="prompt" rows="2" placeholder="What should be built? e.g. 'Write a script that simulates a Rummy card game'"></textarea>
+          <div class="input-footer">
+            <span class="input-hint">Ctrl+Enter to run</span>
+            <button class="run-btn" id="runBtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run Pipeline
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-side">
+      <div class="pipeline-head">
+        <div class="pipeline-label">Agent Pipeline</div>
+        <div class="pipeline-status-text" id="pipelineStatusText">Ready</div>
+      </div>
+      <div class="pipeline-body">
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-rot"><div class="ag-icon">⚡</div><div class="ag-info"><div class="ag-name">ROT Orchestrator</div><div class="ag-sub" id="sub-rot">Llama-3.3-70B · ReAct</div></div><div class="ag-state" id="badge-rot">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+        <div class="conn" id="conn-0"></div>
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-router"><div class="ag-icon">🔀</div><div class="ag-info"><div class="ag-name">Router Agent</div><div class="ag-sub" id="sub-router">Classifies intent → lane</div></div><div class="ag-state" id="badge-router">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+        <div class="conn" id="conn-1"></div>
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-deer"><div class="ag-icon">🌐</div><div class="ag-info"><div class="ag-name">DeerFlow Research</div><div class="ag-sub" id="sub-deer">Live web research</div></div><div class="ag-state" id="badge-deer">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+        <div class="conn" id="conn-2"></div>
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-plan"><div class="ag-icon">📐</div><div class="ag-info"><div class="ag-name">Planner Agent</div><div class="ag-sub" id="sub-plan">Structured algorithm blueprint</div></div><div class="ag-state" id="badge-plan">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+        <div class="conn" id="conn-3"></div>
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-con"><div class="ag-icon">🔨</div><div class="ag-info"><div class="ag-name">Constructor Agent</div><div class="ag-sub" id="sub-con">Qwen2.5-Coder-32B</div></div><div class="ag-state" id="badge-con">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+        <div class="conn" id="conn-4"></div>
+        <div class="ag-row">
+          <div class="ag-item idle" id="ag-insp"><div class="ag-icon">🔍</div><div class="ag-info"><div class="ag-name">Inspector Agent</div><div class="ag-sub" id="sub-insp">Runs output.py → captures stdout</div></div><div class="ag-state" id="badge-insp">—</div></div>
+          <div class="ag-bar"><div class="ag-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="pipeline-summary" id="pipelineSummary">
+        <div class="ps-title">Run Complete</div>
+        <div class="ps-row"><span>Lane</span><span id="sum-lane">—</span></div>
+        <div class="ps-row"><span>Research</span><span id="sum-research">—</span></div>
+        <div class="ps-row"><span>Plan steps</span><span id="sum-steps">—</span></div>
+        <div class="ps-row"><span>Fix attempts</span><span id="sum-fixes">—</span></div>
+        <div class="ps-divider"></div>
+        <div class="ps-row"><span>Status</span><span id="sum-final" style="color:var(--green)">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span id="footerPath">rot/src/rot/configs/config.yml</span>
+    <span>llm: llama-3.3-70b · coder: qwen2.5-coder-32b · inspector: output.py</span>
+  </footer>
+</div>
+
+<script>
+/* ── Helpers ── */
+const $ = id => document.getElementById(id);
+let isRunning = false, pollTimer = null;
+
+/* last known state from backend — used to detect transitions */
+let prev = { research: null, plan: null, code: null };
+
+const agentDefs = [
+  {id:'rot',conn:0},{id:'router',conn:1},{id:'deer',conn:2},
+  {id:'plan',conn:3},{id:'con',conn:4},{id:'insp',conn:null},
+];
+
+/* ── Agent helpers ── */
+function setAgent(id, state, sub, badge){
+  const el = $('ag-'+id); if(!el) return;
+  el.className = 'ag-item '+(state||'idle');
+  if(sub !== undefined)   $('sub-'+id).textContent   = sub;
+  if(badge !== undefined) $('badge-'+id).textContent = badge;
+}
+function litConn(idx){ if(idx===null) return; const c=$('conn-'+idx); if(c) c.classList.add('lit'); }
+
+function resetPipeline(){
+  agentDefs.forEach(a=>{
+    setAgent(a.id,'idle',undefined,'—');
+    if(a.conn!==null){ const c=$('conn-'+a.conn); if(c) c.classList.remove('lit'); }
+  });
+  $('pipelineSummary').classList.remove('show');
+  $('pipelineStatusText').textContent = 'Running…';
+  prev = {research:null, plan:null, code:null};
+}
+
+/* ── Header ── */
+function setHeader(state){
+  const dot=$('hDot'), txt=$('hStatus');
+  dot.className='dot';
+  if(state==='running'){ dot.classList.add('live'); txt.textContent='Pipeline running…'; }
+  else if(state==='done'){ dot.classList.add('done'); txt.textContent='Done — output ready'; }
+  else if(state==='error'){ dot.classList.add('err'); txt.textContent='Pipeline failed'; }
+  else { txt.textContent='Idle — waiting for input'; }
+}
+
+/* ── Run button ── */
+function setRunBtn(running){
+  const btn=$('runBtn');
+  if(running){
+    btn.className='run-btn running';
+    btn.innerHTML='<div class="run-spinner"></div> Running…';
+  } else {
+    btn.className='run-btn';
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg> Run Pipeline';
+  }
+}
+
+/* ── Output helpers ── */
+function removeIdle(){ const e=$('idleScreen'); if(e) e.remove(); }
+function appendToScroll(el){ const s=$('outputScroll'); s.appendChild(el); s.scrollTop=s.scrollHeight; }
+
+function showUserEcho(text){
+  const d=document.createElement('div');
+  d.className='user-echo';
+  d.innerHTML=`<div class="user-avatar">U</div><div class="user-bubble">${escHtml(text)}</div>`;
+  appendToScroll(d);
+}
+
+function showProcessing(){
+  const d=document.createElement('div'); d.id='processingBlock'; d.className='processing-block';
+  d.innerHTML=`
+    <div class="proc-row"><div class="proc-spinner"></div><span>Agent pipeline is running</span><span class="proc-dots"><span>.</span><span>.</span><span>.</span></span></div>
+    <div class="proc-row" style="color:var(--muted2);font-size:11px;padding-left:28px">
+      The result will appear here once <code style="color:var(--blue)">output.py</code> finishes executing
+    </div>`;
+  appendToScroll(d);
+}
+function removeProcessing(){ const p=$('processingBlock'); if(p) p.remove(); }
+
+function colorLine(line){
+  const l=String(line||'');
+  let cls='t-out';
+  if(/error|exception|traceback|failed/i.test(l))    cls='t-err';
+  else if(/warn/i.test(l))                           cls='t-warn';
+  else if(/^\s*(info|debug|note)/i.test(l))         cls='t-info';
+  else if(/[✓✅]|passed|success/i.test(l))          cls='t-success';
+  return `<span class="t-line ${cls}">${escHtml(l)}</span>`;
+}
+
+function renderTerminalLines(raw){
+  if(!raw) return '<span class="t-line t-out">(no output)</span>';
+  return raw.split('\n').map(colorLine).join('\n');
+}
+
+/*
+  ── THE KEY FUNCTION ──
+  Extracts the actual stdout that output.py printed.
+
+  Priority order:
+  1. d.exec_output  — server.py sets this directly from captured stdout  ✅ BEST
+  2. d.output       — alternate field name some NAT versions use
+  3. Parse d.log    — look for PROGRAM OUTPUT: block in inspector text
+  4. Fallback       — show code line count so user knows something ran
+*/
+function extractExecOutput(d){
+  // Priority 1: server sends exec_output directly
+  if(d.exec_output && d.exec_output.trim())
+    return d.exec_output.trim();
+
+  // Priority 2: alternate field
+  if(d.output && d.output.trim())
+    return d.output.trim();
+
+  // Priority 3: parse inspector log for PROGRAM OUTPUT: block
+  if(d.log && d.log.length){
+    const joined = d.log.join('\n');
+
+    // Try to find the PROGRAM OUTPUT section the new inspector produces
+    const progMatch = joined.match(/PROGRAM OUTPUT:\s*\n([\s\S]*?)(?=\nFINAL CODE:|\nDEBUG SECTION:|$)/);
+    if(progMatch && progMatch[1].trim() && progMatch[1].trim() !== '(no output printed)')
+      return progMatch[1].trim();
+
+    // Older inspector: content after "MESSAGE: Code executed successfully"
+    const msgMatch = joined.match(/MESSAGE:[^\n]*\n([\s\S]*?)(?=\nFINAL CODE:|$)/);
+    if(msgMatch && msgMatch[1].trim())
+      return msgMatch[1].trim();
+  }
+
+  // Priority 4: graceful fallback
+  if(d.code){
+    const lines = d.code.split('\n').length;
+    return `(output.py was generated — ${lines} lines)\n\nNo stdout was captured.\nThis usually means the code ran silently or produced a GUI/file output.\nCheck output.py directly for results.`;
+  }
+
+  return '(No execution output captured — check your backend logs)';
+}
+
+/*
+  ── DETERMINE STATUS ──
+  Checks if the inspector reported PASSED or FAILED.
+*/
+function determineStatus(d){
+  // Server can send this explicitly
+  if(d.inspector_passed !== undefined) return d.inspector_passed;
+
+  if(!d.log || !d.log.length) return true; // assume ok if no log
+  const joined = d.log.join('\n');
+
+  // If any PASSED exists and it's the last STATUS line → passed
+  const lastStatusMatch = [...joined.matchAll(/OVERALL STATUS:\s*(\w+)/g)].pop();
+  if(lastStatusMatch) return lastStatusMatch[1].toUpperCase() === 'PASSED';
+
+  return true;
+}
+
+function showFinalOutput(execOutput, hasFix, statusOk, stats, outputType){
+  removeProcessing();
+  $('outputFileBadge').style.display='block';
+  $('outputTimestamp').textContent = new Date().toLocaleTimeString();
+
+  const badgeCls   = statusOk ? (hasFix ? 'badge-fixed' : 'badge-success') : 'badge-failed';
+  const badgeLabel = statusOk ? (hasFix ? 'PASSED (auto-fixed)' : 'PASSED') : 'FAILED';
+  const isHtml     = outputType === 'html';
+  const isDirect   = outputType === 'direct';
+  const titleLabel = isHtml ? 'HTML project rendered' : isDirect ? 'Direct answer' : 'output.py execution result';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'final-output-block';
+
+  if(isHtml && stats.htmlContent){
+    // Render HTML output in an iframe
+    // Use srcdoc for reliable iframe rendering (no blob URL security issues)
+    const escapedHtml = (stats.htmlContent||'').replace(/"/g, '&quot;');
+    wrapper.innerHTML = `
+      <div class="output-header">
+        <div class="output-header-left">
+          <div class="output-type-badge ${badgeCls}">${badgeLabel}</div>
+          <div class="output-title">${titleLabel}</div>
+        </div>
+        <div class="output-header-right">
+          <button class="copy-btn" id="openHtmlBtn">Open in tab ↗</button>
+          <button class="copy-btn" id="copyOutputBtn">Copy HTML</button>
+        </div>
+      </div>
+      <iframe srcdoc="${escapedHtml}"
+        style="width:100%;height:500px;border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;background:#fff;"
+        allow="scripts">
+      </iframe>
+      <div class="output-meta-row">
+        <div class="meta-item"><div class="meta-dot" style="background:var(--cyan)"></div><span>HTML project</span></div>
+        <div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>${stats.lines} lines</span></div>
+        <div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>${stats.elapsed}s elapsed</span></div>
+      </div>`;
+    appendToScroll(wrapper);
+    const rawHtml = stats.htmlContent||'';
+    wrapper.querySelector('#copyOutputBtn').addEventListener('click', function(){
+      navigator.clipboard.writeText(rawHtml);
+      this.textContent='Copied!';
+      setTimeout(()=>{ this.textContent='Copy HTML'; }, 1500);
+    });
+    wrapper.querySelector('#openHtmlBtn').addEventListener('click', ()=>{
+      const blob = new Blob([rawHtml], {type:'text/html'});
+      window.open(URL.createObjectURL(blob), '_blank');
+    });
+  } else {
+    // Terminal (Python) or Markdown (direct answer)
+    const useMarkdown = isDirect;
+    wrapper.innerHTML = useMarkdown
+      ? `<div class="output-header">
+          <div class="output-header-left">
+            <div class="output-type-badge ${badgeCls}">${badgeLabel}</div>
+            <div class="output-title">${titleLabel}</div>
+          </div>
+          <div class="output-header-right">
+            <button class="copy-btn" id="copyOutputBtn">Copy</button>
+          </div>
+        </div>
+        <div class="md-output">${renderMarkdown(execOutput)}</div>
+        <div class="output-meta-row">
+          <div class="meta-item"><div class="meta-dot" style="background:var(--cyan)"></div><span>direct answer</span></div>
+          <div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>${stats.elapsed}s elapsed</span></div>
+        </div>`
+      : `<div class="output-header">
+          <div class="output-header-left">
+            <div class="output-type-badge ${badgeCls}">${badgeLabel}</div>
+            <div class="output-title">${titleLabel}</div>
+          </div>
+          <div class="output-header-right">
+            <button class="copy-btn" id="copyOutputBtn">Copy output</button>
+          </div>
+        </div>
+        <div class="terminal-output">${renderTerminalLines(execOutput)}</div>
+        <div class="output-meta-row">
+          <div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>output.py</span></div>
+          ${stats.lines ? `<div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>${stats.lines} lines generated</span></div>` : ''}
+          ${hasFix ? `<div class="meta-item"><div class="meta-dot" style="background:var(--amber)"></div><span>1 auto-fix applied</span></div>` : ''}
+          <div class="meta-item"><div class="meta-dot" style="background:var(--muted2)"></div><span>${stats.elapsed}s elapsed</span></div>
+        </div>`;
+    appendToScroll(wrapper);
+    wrapper.querySelector('#copyOutputBtn').addEventListener('click', function(){
+      navigator.clipboard.writeText(execOutput||'');
+      this.textContent='Copied!';
+      setTimeout(()=>{ this.textContent='Copy output'; }, 1500);
+    });
+  }
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Markdown renderer ── */
+function renderMarkdown(raw){
+  if(!raw) return '<p>(no output)</p>';
+
+  // Fix unicode escapes
+  let text = raw.replace(/\\u([0-9a-fA-F]{4})/g, (m,c) => String.fromCharCode(parseInt(c,16)));
+  text = text.replace(/\u([0-9a-fA-F]{4})/g, (m,c) => String.fromCharCode(parseInt(c,16)));
+
+  const lines = text.split('\n');
+  let out = '', inCode = false, codeLines = [], codeLang = '';
+  let inTable = false, tableRows = [];
+
+  function flushTable(){
+    if(!tableRows.length) return;
+    let h = '<table>';
+    tableRows.forEach((row, i) => {
+      const cells = row.split('|').map(c=>c.trim()).filter(c=>c && !c.match(/^[-:]+$/));
+      if(i === 0){
+        h += '<tr>' + cells.map(c=>`<th>${inlineFormat(c)}</th>`).join('') + '</tr>';
+      } else if(!row.match(/^[|\s:-]+$/)){
+        h += '<tr>' + cells.map(c=>`<td>${inlineFormat(c)}</td>`).join('') + '</tr>';
+      }
+    });
+    out += h + '</table>';
+    tableRows = []; inTable = false;
+  }
+
+  function inlineFormat(t){
+    t = escHtml(t);
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    t = t.replace(/✓|✅/g, '<span class="md-check">✓</span>');
+    t = t.replace(/✗|❌/g, '<span class="md-cross">✗</span>');
+    t = t.replace(/^(Week\s*\d+[^:]*:?)/g, '<span class="md-week">$1</span>');
+    return t;
+  }
+
+  for(let i=0; i<lines.length; i++){
+    const line = lines[i];
+
+    // Code blocks
+    if(line.startsWith('```')){
+      if(!inCode){
+        inCode = true; codeLang = line.slice(3).trim(); codeLines = [];
+        if(inTable) flushTable();
+      } else {
+        out += `<pre><code>${escHtml(codeLines.join('\n'))}</code></pre>`;
+        inCode = false; codeLines = []; codeLang = '';
+      }
+      continue;
+    }
+    if(inCode){ codeLines.push(line); continue; }
+
+    // Tables
+    if(line.startsWith('|')){
+      if(inTable){ tableRows.push(line); }
+      else { inTable = true; tableRows = [line]; }
+      continue;
+    } else if(inTable){ flushTable(); }
+
+    // Dividers (━━━ or ----)
+    if(line.match(/^[━─=\-]{4,}$/)){
+      out += '<hr>'; continue;
+    }
+
+    // Headings
+    if(line.startsWith('#### ')){ out += `<h4>${inlineFormat(line.slice(5))}</h4>`; continue; }
+    if(line.startsWith('### ')){ out += `<h3>${inlineFormat(line.slice(4))}</h3>`; continue; }
+    if(line.startsWith('## ')){ out += `<h2>${inlineFormat(line.slice(3))}</h2>`; continue; }
+    if(line.startsWith('# ')){ out += `<h1>${inlineFormat(line.slice(2))}</h1>`; continue; }
+
+    // Blockquote
+    if(line.startsWith('> ')){ out += `<blockquote>${inlineFormat(line.slice(2))}</blockquote>`; continue; }
+
+    // Lists
+    if(line.match(/^[\-\*] /)){ out += `<ul><li>${inlineFormat(line.slice(2))}</li></ul>`; continue; }
+    if(line.match(/^\d+\. /)){ out += `<ol><li>${inlineFormat(line.replace(/^\d+\.\s*/,''))}</li></ol>`; continue; }
+
+    // Empty line
+    if(!line.trim()){ out += '<br>'; continue; }
+
+    // Normal paragraph
+    out += `<p>${inlineFormat(line)}</p>`;
+  }
+
+  if(inCode) out += `<pre><code>${escHtml(codeLines.join('\n'))}</code></pre>`;
+  if(inTable) flushTable();
+
+  // Merge consecutive <ul><li> into single <ul>
+  out = out.replace(/<\/ul>\s*<ul>/g, '');
+  out = out.replace(/<\/ol>\s*<ol>/g, '');
+  out = out.replace(/<br>\s*<br>/g, '<br>');
+
+  return out;
+}
+
+/* ─────────────────────────────────────────────
+   POLL /status  (every 1.2s while running)
+
+   Expected backend shape:
+   {
+     status:           "RUNNING" | "DONE" | "ERROR",
+     research:         {...} | null,
+     plan:             { algorithm_steps: [...] } | null,
+     code:             "python code string",
+     exec_output:      "stdout captured from running output.py",  ← most important
+     log:              ["line1", ...],
+     elapsed:          18.4,
+     inspector_passed: true | false   (optional — UI infers if absent)
+   }
+───────────────────────────────────────────── */
+async function doPoll(){
+  try{
+    const r = await fetch('/status');
+    if(!r.ok) return;
+    const d = await r.json();
+
+    /* — ROT always active while running — */
+    if(d.status === 'RUNNING')
+      setAgent('rot','active','Orchestrating pipeline…','RUN');
+
+    /* — Router: show as done once we have research or plan — */
+    if(d.research || d.plan){
+      setAgent('rot','done','Orchestration in progress','✓'); litConn(0);
+      setAgent('router','done','Lane: build_pipeline','✓');   litConn(1);
+    } else if(d.status === 'RUNNING'){
+      setAgent('router','active','Classifying intent…','…');
+    }
+
+    /* — DeerFlow — */
+    if(d.research && !prev.research){
+      setAgent('deer','done','Research collected','✓'); litConn(2);
+    } else if(d.status === 'RUNNING' && !d.research){
+      setAgent('deer','active','Fetching live data…','…');
+    }
+
+    /* — Planner — */
+    if(d.plan && !prev.plan){
+      const n = (d.plan.algorithm_steps||d.plan.steps||[]).length;
+      setAgent('plan','done', n ? `${n} steps planned` : 'Plan ready', '✓'); litConn(3);
+    } else if(d.research && !d.plan){
+      setAgent('plan','active','Building algorithm blueprint…','…');
+    }
+
+    /* — Constructor — */
+    if(d.code && !prev.code){
+      const lines = d.code.split('\n').length;
+      setAgent('con','done',`${lines} lines → output.py`,'✓'); litConn(4);
+      setAgent('insp','active','Executing output.py…','…');
+      $('pipelineStatusText').textContent = 'Inspector running output.py…';
+    } else if(d.plan && !d.code){
+      setAgent('con','active','Writing code…','…');
+      $('pipelineStatusText').textContent = 'Constructor writing code…';
+    }
+
+    prev = { research: d.research, plan: d.plan, code: d.code };
+
+    /* ── DONE ── */
+    if(d.status === 'DONE' || d.status === 'ERROR'){
+      clearInterval(pollTimer);
+      isRunning = false;
+      setRunBtn(false);
+
+      const statusOk  = d.status !== 'ERROR' && determineStatus(d);
+      const hasFix    = (d.log||[]).some(l => /fix|attempt\s*2/i.test(l));
+      const execOutput = extractExecOutput(d);  // ← THE KEY CALL
+      const lines      = d.code ? d.code.split('\n').length : 0;
+
+      setHeader(statusOk ? 'done' : 'error');
+
+      setAgent('insp', statusOk ? 'done' : 'failed',
+        statusOk ? 'Execution complete' : 'Execution failed',
+        statusOk ? '✓' : '✗');
+      setAgent('rot','done','Pipeline complete','✓');
+
+      // Read HTML content for iframe rendering
+      let htmlContent = null;
+      if(d.output_type === 'html'){
+        // Prefer the dedicated html_content field the server sends
+        if(d.html_content && d.html_content.trim()){
+          htmlContent = d.html_content;
+        } else {
+          // Fallback: try to get raw HTML from log or exec_output
+          const logJoined = (d.log||[]).join('\n');
+          const htmlMatch = logJoined.match(/<!DOCTYPE html>[\s\S]*/i) ||
+                            (d.exec_output||'').match(/<!DOCTYPE html>[\s\S]*/i);
+          htmlContent = htmlMatch ? htmlMatch[0] : null;
+          // Fallback: if exec_output contains HTML preview, strip the header
+          if(!htmlContent && d.exec_output && d.exec_output.includes('<')){
+            const previewMatch = d.exec_output.match(/HTML PREVIEW[^\n]*\n[-─]+\n([\s\S]*)/);
+            if(previewMatch) htmlContent = previewMatch[1];
+          }
+        }
+      }
+
+      const outputType = d.output_type ||
+        (d.exec_output && !d.code ? 'direct' : 'python');
+
+      showFinalOutput(execOutput, hasFix, statusOk, {
+        lines,
+        elapsed:     d.elapsed || '—',
+        htmlContent: htmlContent,
+      }, outputType);
+
+      const steps = (d.plan&&(d.plan.algorithm_steps||d.plan.steps))||[];
+      $('sum-lane').textContent      = 'build_pipeline';
+      $('sum-research').textContent  = d.research ? 'Collected' : 'Fallback';
+      $('sum-steps').textContent     = steps.length || '—';
+      $('sum-fixes').textContent     = hasFix ? '1' : '0';
+      $('sum-final').textContent     = statusOk ? 'PASSED ✅' : 'FAILED ❌';
+      $('sum-final').style.color     = statusOk ? 'var(--green)' : 'var(--red)';
+      $('pipelineSummary').classList.add('show');
+      $('pipelineStatusText').textContent = statusOk ? 'Complete ✓' : 'Failed ✗';
+    }
+  } catch(e){
+    console.warn('Poll error (backend may still be starting):', e.message);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   DEMO SIMULATION  (runs when no backend found)
+   Shows how the UI looks with realistic fake data.
+───────────────────────────────────────────── */
+function simulateDemo(input){
+  const startTime = Date.now();
+  const isDevPlan = /plan|developer|engineer|roadmap|learn|study/i.test(input);
+  const isBtc     = /btc|bitcoin|crypto|price|chart|plot/i.test(input);
+
+  let fakeExecOutput;
+  if(isDevPlan){
+    fakeExecOutput =
+`╔══════════════════════════════════════════════════════════════╗
+║        SOFTWARE ENGINEER ROADMAP — 1 MONTH PLAN              ║
+╚══════════════════════════════════════════════════════════════╝
+
+Week 1 — Foundations
+  ✓ Day 1-2 : Python basics — variables, loops, functions
+  ✓ Day 3-4 : Data structures — lists, dicts, sets
+  ✓ Day 5-7 : OOP, modules, file I/O
+
+Week 2 — Core Skills
+  ✓ Day 8-10: Git & GitHub workflow
+  ✓ Day 11-12: REST APIs with requests
+  ✓ Day 13-14: SQL basics + SQLite
+
+Week 3 — Build Projects
+  ✓ Day 15-17: CLI tool (task manager or weather app)
+  ✓ Day 18-20: Web scraper with BeautifulSoup
+  ✓ Day 21: REST API client integration
+
+Week 4 — Job Readiness
+  ✓ Day 22-24: Algorithms & LeetCode (easy tier)
+  ✓ Day 25-26: System design basics
+  ✓ Day 27-28: Resume, GitHub portfolio polish
+  ✓ Day 29-30: Mock interviews + final project deploy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Daily Schedule : 6-8 hrs focused study
+Resources      : freeCodeCamp, CS50P, NeetCode 150
+Target Role    : Junior / Entry-Level SWE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Plan generated by RENKAI · output.py executed successfully`;
+  } else if(isBtc){
+    fakeExecOutput =
+`Fetching BTC/USD price data...
+Source      : CoinGecko API
+Symbol      : BTC/USD
+Current     : $67,234.50
+24h Change  : +2.41%
+
+7-Day Price Chart (ASCII):
+68000 ┤                    ╭─╮
+67000 ┤               ╭────╯ ╰──
+66000 ┤          ╭────╯
+65000 ┤     ╭────╯
+64000 ┤╭────╯
+63000 ┼╯
+       Mon  Tue  Wed  Thu  Fri  Sat  Sun
+
+Chart saved → btc_7day.png
+Done.`;
+  } else {
+    fakeExecOutput =
+`RENKAI Pipeline — output.py execution result
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Task: ${input}
+
+Processing complete.
+All steps executed without errors.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: ✓ PASSED`;
+  }
+
+  const tl = [
+    {ms:500,  fn:()=>{ setAgent('rot','active','Orchestrating pipeline…','RUN'); $('pipelineStatusText').textContent='ROT dispatching…'; }},
+    {ms:1200, fn:()=>{ setAgent('router','active','Classifying intent…','…'); }},
+    {ms:2200, fn:()=>{ setAgent('router','done','Lane: build_pipeline','✓'); litConn(0); litConn(1); $('pipelineStatusText').textContent='DeerFlow researching…'; }},
+    {ms:2700, fn:()=>{ setAgent('deer','active','Searching the web…','…'); }},
+    {ms:5400, fn:()=>{ setAgent('deer','done','Research collected','✓'); litConn(2); $('pipelineStatusText').textContent='Planner building blueprint…'; }},
+    {ms:5900, fn:()=>{ setAgent('plan','active','Architecting plan…','…'); }},
+    {ms:8200, fn:()=>{ setAgent('plan','done','4 steps planned','✓'); litConn(3); $('pipelineStatusText').textContent='Constructor writing code…'; }},
+    {ms:8700, fn:()=>{ setAgent('con','active','Writing output.py…','…'); }},
+    {ms:13000,fn:()=>{ setAgent('con','done','286 lines → output.py','✓'); litConn(4); setAgent('insp','active','Executing output.py…','…'); $('pipelineStatusText').textContent='Inspector running output.py…'; }},
+    {ms:14600,fn:()=>{ setAgent('insp','failed','NameError: sys not defined','✗'); $('pipelineStatusText').textContent='Auto-fixing…'; }},
+    {ms:15400,fn:()=>{ setAgent('con','active','Surgical fix applied…','Fix'); }},
+    {ms:16800,fn:()=>{ setAgent('con','done','Bug patched','✓'); setAgent('insp','active','Re-running output.py…','…'); $('pipelineStatusText').textContent='Re-running output.py…'; }},
+    {ms:18400,fn:()=>{
+      setAgent('insp','done','Execution complete','✓');
+      setAgent('rot','done','Pipeline complete','✓');
+      setHeader('done'); setRunBtn(false); isRunning=false;
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(1);
+      showFinalOutput(fakeExecOutput, true, true, {lines:286, elapsed});
+      $('sum-lane').textContent='build_pipeline';
+      $('sum-research').textContent='Collected';
+      $('sum-steps').textContent='4';
+      $('sum-fixes').textContent='1';
+      $('sum-final').textContent='PASSED ✅';
+      $('sum-final').style.color='var(--green)';
+      $('pipelineSummary').classList.add('show');
+      $('pipelineStatusText').textContent='Complete ✓';
+    }},
+  ];
+  tl.forEach(t => setTimeout(t.fn, t.ms));
+}
+
+/* ─────────────────────────────────────────────
+   MAIN RUN
+───────────────────────────────────────────── */
+async function runPipeline(){
+  if(isRunning) return;
+  const input = $('prompt').value.trim();
+  if(!input) return;
+
+  isRunning = true;
+  removeIdle();
+  resetPipeline();
+  setHeader('running');
+  setRunBtn(true);
+  showUserEcho(input);
+  showProcessing();
+  setAgent('rot','active','Initializing…','…');
+
+  try{
+    const res = await fetch('/run', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({input}),
+    });
+    if(!res.ok) throw new Error('backend not ok');
+    pollTimer = setInterval(doPoll, 1200);
+  } catch(e){
+    // No backend reachable — run visual demo
+    simulateDemo(input);
+  }
+}
+
+$('runBtn').addEventListener('click', runPipeline);
+document.addEventListener('keydown', e=>{ if(e.ctrlKey && e.key==='Enter') runPipeline(); });
+$('prompt').addEventListener('keydown', e=>{ if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); runPipeline(); }});
+</script>
+</body>
+</html>
